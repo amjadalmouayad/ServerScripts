@@ -8,13 +8,7 @@ yum -y install epel-release
 yum -y install tor
 service tor start
 
-#backuppc
-echo "backuppc ALL=NOPASSWD: /usr/bin/rsync
-Defaults:backuppc    !requiretty" >> /etc/sudoers
-useradd backuppc
-#scp -r 192.168.10.51:/backup/BackupPC/.ssh /home/backuppc/
-#chown -R backuppc.backuppc /home/backuppc/.ssh/
-#chmod -R go-rwx /home/backuppc/.ssh/
+
 chkconfig iptables off
 chkconfig ip6tables off
 service ip6tables stop

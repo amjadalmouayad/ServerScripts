@@ -20,6 +20,14 @@ yum -y install epel-release
 yum -y install tor
 service tor start
 
+#backuppc
+echo "backuppc ALL=NOPASSWD: /usr/bin/rsync
+Defaults:backuppc    !requiretty" >> /etc/sudoers
+useradd backuppc
+scp -r 192.168.10.51:/backup/BackupPC/.ssh /home/backuppc/
+chown -R backuppc.backuppc /home/backuppc/.ssh/
+chmod -R go-rwx /home/backuppc/.ssh/
+
 
 chkconfig iptables off
 chkconfig ip6tables off
@@ -34,7 +42,6 @@ curl -O http://yum.postgresql.org/9.3/redhat/rhel-6-x86_64/pgdg-centos93-9.3-1.n
 torify curl -O https://download.postgresql.org/pub/repos/yum/9.6/redhat/rhel-6-x86_64/pgdg-centos96-9.6-3.noarch.rpm
 
 echo_st="$(echo $?)"
-#echo $echo_st
 if [ $echo_st = 0 ];
 then
         cecho $green "download complete postgresql"
@@ -47,7 +54,6 @@ cecho $green  "install postgresql"
 yum -y install postgresql96-server
 
 echo_st="$(echo $?)"
-#echo $echo_st
 if [ $echo_st = 0 ];
 then
         cecho $green "complete install postgresql"
@@ -68,7 +74,6 @@ torify wget --no-cookies --no-check-certificate --header "Cookie: gpw_e24=http%3
 "http://download.oracle.com/otn-pub/java/jdk/8u60-b27/jre-8u60-linux-x64.rpm"
 
 echo_st="$(echo $?)"
-#echo $echo_st
 if [ $echo_st = 0 ];
 then
         cecho $green "download complete Java JRE"
@@ -82,7 +87,6 @@ cd ~
 torify wget --no-cookies --no-check-certificate --header "Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com%2F; oraclelicense=accept-securebackup-cookie" "http://download.oracle.com/otn-pub/java/jdk/8u60-b27/jdk-8u60-linux-x64.rpm"
 
 echo_st="$(echo $?)"
-#echo $echo_st
 if [ $echo_st = 0 ];
 then
         cecho $green "download complete Java JDK"
@@ -106,7 +110,6 @@ cd /Pentaho
 torify wget https://downloads.sourceforge.net/project/pentaho/Data%20Integration/7.0/pdi-ce-7.0.0.0-25.zip?r=https%3A%2F%2Fsourceforge.net%2Fprojects%2Fpentaho%2F&ts=1494250902&use_mirror=cytranet
 
 echo_st="$(echo $?)"
-#echo $echo_st
 if [ $echo_st = 0 ];
 then
         cecho $green "download complete pentaho-server-ce-7.0.0.0-25"

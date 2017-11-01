@@ -1,0 +1,16 @@
+#!/bin/bash
+REMOTEHOST=($(ls -l1 *.key | awk '{ print $9 }'  | sed 's/\(.\+\)\.key/\1/g'))
+REMOTEPORT=10050
+TIMEOUT=1
+for i in "${REMOTEHOST[@]}"; do
+        if  nc -w $TIMEOUT -z $i $REMOTEPORT ; then
+        echo "I was able to connect to ${i}"
+        echo $i >> up.txt
+        getent hosts $i | awk '{ print $1 }' >> up.txt
+
+        else
+        echo "Connection to ${i} failed."
+        echo $i >> down.txt
+        fi
+done
+sed -e 's/^./\U&/' up.txt > vpn-R.txt

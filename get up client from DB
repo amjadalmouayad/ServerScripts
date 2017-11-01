@@ -1,0 +1,1 @@
+psql -h localhost -d zabbix -U zabbix -W -x -tAc "select hosts.name, interface.ip from hosts inner join interface on hosts.hostid=interface.hostid where status='0' and available='1' order by hosts.name ;" | cut -d'|' -f 2 | sed -e '/^ *$/d' > av_en.txt

@@ -1,10 +1,9 @@
 #!/bin/bash
 
-psql -h localhost -d zabbix -U zabbix -W -x -tAc "select hosts.name from hosts inner join interface on hosts.hostid=interface.hostid where hosts.status='0' and hosts.available='1' order by hosts.name ;" | cut -d'|' -f 2 | sed -e '/^ *$/d' |sed 's/[ -]\+/-/g'| tr [a-z] [A-Z]  > name_av.txt
-echo $password
-psql -h localhost -d zabbix -U zabbix -W -x -tAc "select interface.ip from interface inner join hosts on interface.hostid=hosts.hostid where hosts.status='0' and hosts.available='1' order by hosts.name ;" | cut -d'|' -f 2 | sed -e '/^ *$/d' > ip_av.txt
-echo $password
-cat name_av.txt | tr -d "[:space:]"
+PGPASSWORD=YOURPASS psql -h localhost -d [namedb] -U [username] -x -tAc "select hosts.name from hosts inner join interface on hosts.hostid=interface.hostid where hosts.status='0' and hosts.available='1' order by hosts.name ;" | cut -d'|' -f 2 | sed -e '/^ *$/d' |sed 's/[ -]\+/-/g'| tr [a-z] [A-Z]  > name_av.txt
+
+PGPASSWORD=YOURPASS psql -h localhost -d [namedb] -U [username] -x -tAc "select interface.ip from interface inner join hosts on interface.hostid=hosts.hostid where hosts.status='0' and hosts.available='1' order by hosts.name ;" | cut -d'|' -f 2 | sed -e '/^ *$/d' > ip_av.txt
+
 i=0;
 for j in `cat name_av.txt` 
 do

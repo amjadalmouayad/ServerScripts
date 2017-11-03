@@ -1,0 +1,29 @@
+#!/bin/bash
+
+PGPASSWORD=YOURPASS psql -h localhost -d [namedb] -U [username] -x -tAc "select hosts.name from hosts inner join interface on hosts.hostid=interface.hostid where hosts.status='0' and hosts.available='1' order by hosts.name ;" | cut -d'|' -f 2 | sed -e '/^ *$/d' |sed 's/[ -]\+/-/g'| tr [a-z] [A-Z]  > name_av.txt
+
+PGPASSWORD=YOURPASS psql -h localhost -d [namedb] -U [username] -x -tAc "select interface.ip from interface inner join hosts on interface.hostid=hosts.hostid where hosts.status='0' and hosts.available='1' order by hosts.name ;" | cut -d'|' -f 2 | sed -e '/^ *$/d' > ip_av.txt
+
+i=0;
+for j in `cat name_av.txt` 
+do
+   nma[$i]=$j; 
+   #do manipulations here
+    i=$(($i+1)); 
+done
+
+k=0;
+for l in `cat ip_av.txt` 
+do
+   ipa[$k]=$l; 
+   #do manipulations here
+    k=$(($k+1));    
+done
+SAVEIFS=$IFS
+IFS=$'\n'
+# Restore IFS
+IFS=$SAVEIFS
+for (( i=0; i<${#nma[@]}; i++ ))
+do
+    echo ${nma[$i]}" | "${ipa[$i]}
+done

@@ -1,5 +1,4 @@
 #!/bin/bash
-password=mHMDvYp7ADpaL55v0Saz
 
 psql -h localhost -d zabbix -U zabbix -W -x -tAc "select hosts.name from hosts inner join interface on hosts.hostid=interface.hostid where hosts.status='0' and hosts.available='1' order by hosts.name ;" | cut -d'|' -f 2 | sed -e '/^ *$/d' |sed 's/[ -]\+/-/g'| tr [a-z] [A-Z]  > name_av.txt
 echo $password

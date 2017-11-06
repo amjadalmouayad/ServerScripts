@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+table {
+    font-family: arial, sans-serif;
+	font-size: 11px;
+    border-collapse: collapse;
+    width: 200%;
+	
+    margin-left: auto;
+    margin-right: auto;
+}
+
+
+td, th {
+    border: 1px solid #dddddd;
+    text-align: center;
+    padding: 9px;
+}
+
+tr:nth-child(even) {
+    background-color: #dddddd;
+}
+</style>
+</head>
+
+<?php
+echo '<table style="width:auto" border="1">';
+$file = fopen("r.txt", "r") or die("Unable to open file!");
+echo '<tbody>';
+echo '  <tr>
+    <th style="width:50%">Name</th>
+    <th style="width:50%">VPN IP</th>
+    
+  </tr>';
+while (!feof($file)){   
+    $data = fgets($file); 
+	if (strpos($data, '>') !== false) 
+	{
+	 $data=preg_replace( "/>/", "", $data );	
+     echo "<tr><td>" . str_replace('|','<sg/td><td>',$data) . '</td></tr>';
+	}
+   
+}
+
+
+echo '</tbody>';
+echo '</table>';
+fclose($file);
+
+
+?>
+
+</html>

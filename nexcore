@@ -1,0 +1,118 @@
+#!/bin/bash
+
+vpnname=$hostname
+ntpdate 
+hwclock -w
+
+apt-get update
+apt-get install samba samba-common smbclient winbind krb5-config libpam-krb5 libnss-winbind krb5-user libsasl2-modules-gssapi-mit ssh-krb5 -y -qq
+
+cp -Rfa /etc/resolv.conf /etc/resolv.conf.bkp
+
+echo > /etc/resolv.conf
+
+echo "
+search nexcore.com.br
+nameserver 10.0.0.132
+nameserver 10.0.0.133
+" > /etc/resolv.conf
+
+cp -Rfa /etc/krb5.conf /etc/krb5.conf.bkp
+
+echo > /etc/krb5.conf
+
+echo "
+#/etc/krb5.conf
+[logging]
+     default = FILE:/var/log/krb5libs.log
+     kdc = FILE:/var/log/krb5kdc.log
+     admin_server = FILE:/var/log/kadmind.log
+
+[libdefaults]
+     default_realm = NEXCORE.LOCAL
+     dns_lookup_realm = FALSE
+     dns_lookup_kdc = FALSE
+     ticket_lifetime = 24h
+     forwardable = yes
+
+[realms]
+NEXCORE.LOCAL = {
+        kdc = 10.0.0.135
+        admin_server = 10.0.0.135:749
+        default_server = 10.0.0.135
+}
+[domain_realm]
+        .nexcore.local = NEXCORE.LOCAL
+        nexcore.local  = NEXCORE.LOCAL
+
+[appdefaults]
+     pam = {
+          debug = FALSE
+          ticket_lifetime = 36000
+          renew_lifetime = 36000
+          forwardable = TRUE
+          krb4_convert = FALSE
+     }
+" >> /etc/krb5.conf
+apt-get install samba samba-common smbclient winbind krb5-config libpam-krb5 libnss-winbind krb5-user libsasl2-modules-gssapi-mit ssh-krb5 -y -qq
+
+echo "
+[global]
+      workgroup = NEXCORE
+      realm = nexcore.local
+      netbios name = $(hostname)
+      server string = $(hostname)
+      security = ADS
+      auth methods = winbind
+      kerberos method = secrets and keytab
+      winbind refresh tickets = yes
+      socket options = TCP_NODELAY SO_RCVBUF=8192 SO_SNDBUF=8192
+      load printers = No
+      printing = bsd
+      printcap name = /dev/null
+      disable spoolss = Yes
+      local master = No
+      domain master = No
+      winbind cache time = 15
+      winbind enum users = Yes
+      winbind enum groups = Yes
+      winbind use default domain = Yes
+      idmap config * : range = 10000-15000
+      idmap config * : backend = tdb
+      template shell = /bin/bash
+    " >> /etc/samba/smb.conf
+	  
+	  
+
+
+cp -Rfa /etc/nsswitch.conf /etc/nsswitch.conf.bkp
+echo > /etc/nsswitch.conf
+
+echo "
+passwd:         compat winbind
+group:          compat winbind
+shadow:         compat winbind
+gshadow:        files
+hosts:          files dns
+networks:       files
+protocols:      db files
+services:       db files
+ethers:         db files
+rpc:            db files
+netgroup:       nis
+" >> /etc/nsswitch.conf
+
+
+echo "session optional        pam_mkhomedir.so skel=/etc/skel umask=077" >> /etc/pam.d/common-session
+
+
+systemctl restart samba-ad-dc.service
+systemctl restart winbind.service
+
+net ads join nexcore.local -U test%nex134*
+
+systemctl restart samba-ad-dc.service
+systemctl restart winbind.service
+
+
+wbinfo -t

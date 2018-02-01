@@ -1,0 +1,201 @@
+#!/bin/bash
+
+export DEBIAN_FRONTEND=noninteractive
+
+DomUser=""				# domain user name, exmple: "admin"
+DomPass=""				# password of doamin user, exmple: "admin123" 
+fulldomainname="" 		# name of domain, exmple: "domain.local"
+domainname=""			# name of domain, exmple: "domain"
+ADServerIP=""
+ServerName=""
+
+#1
+# upadate and install Required packages 
+pkgs () {
+apt-get update
+srvname=(samba smbclient winbind krb5-config libpam-krb5 libnss-winbind krb5-user libsasl2-modules-gssapi-mit ssh-krb5 ntpdate)
+for i in "${srvname[@]}"; do
+apt-get install $i -qq -y > /dev/null
+st=$echo$?
+if [ $st != 0 ];
+then
+echo  "Falhou o download pacotes de pré-requisitos ${i} "
+break
+else     
+echo "está instalado ${i}"
+fi
+done
+if [ $st = 0 ];
+then
+echo "krb5conf 2" > /etc/funname.conf
+krb5conf
+else
+	echo "Error"
+fi
+}
+
+
+#2
+# set configurations of krb5 and make backup for old configurations  
+krb5conf () {
+cp /etc/krb5.conf "/etc/krb5.conf.$(date)"
+echo "#/etc/krb5.conf
+[logging]
+     default = FILE:/var/log/krb5libs.log
+     kdc = FILE:/var/log/krb5kdc.log
+     admin_server = FILE:/var/log/kadmind.log
+
+[libdefaults]
+     default_realm = $(fulldomainname | tr 'a-z' 'A-Z')
+     dns_lookup_realm = false
+     dns_lookup_kdc = false
+     ticket_lifetime = 24h
+     forwardable = yes
+
+[realms]
+$(fulldomainname | tr 'a-z' 'A-Z') = {
+        kdc = $(ADServerIP)
+        admin_server = $(ADServerIP):749
+        default_server = $(ADServerIP)
+      }
+[domain_realm]
+        .$(fulldomainname) = $(fulldomainname | tr 'a-z' 'A-Z')
+        $(fulldomainname)  = $(fulldomainname | tr 'a-z' 'A-Z')
+
+[appdefaults]
+     pam = {
+          debug = false
+          ticket_lifetime = 36000
+          renew_lifetime = 36000
+          forwardable = true
+          krb4_convert = false
+      }" > /etc/krb5.conf
+echo "lmhos 3" > /etc/funname.conf
+lmhos
+}
+
+#3
+lmhos () {
+echo "$(ADServerIP) $(domainname | tr 'a-z' 'A-Z')
+$(ADServerIP) $(ServerName).$(fulldomainname)" >> /etc/samba/lmhosts
+echo "smbconf 4" > /etc/funname.conf
+smbconf
+}
+
+#4
+smbconf () {
+cp /etc/samba/smb.conf "/etc/samba/smb.conf.$(date)"
+
+echo "[global]
+workgroup = $(domainname | tr 'a-z' 'A-Z')
+realm = $(fulldomainname)
+netbios name = $(hostname | tr 'a-z' 'A-Z')
+server string = $(hostname | tr 'a-z' 'A-Z')
+security = ADS
+auth methods = winbind
+kerberos method = secrets and keytab
+winbind refresh tickets = yes
+socket options = TCP_NODELAY SO_RCVBUF=8192 SO_SNDBUF=8192
+load printers = No
+printing = bsd
+printcap name = /dev/null
+disable spoolss = Yes
+local master = No
+domain master = No
+winbind cache time = 15
+winbind enum users = Yes
+winbind enum groups = Yes
+winbind use default domain = Yes
+idmap config * : range = 10000-15000
+idmap config * : backend = tdb
+template shell = /bin/bash" >> /etc/samba/smb.conf
+echo "nsswi 5" > /etc/funname.conf
+nsswi
+}
+
+#5
+nsswi () {
+cp /etc/nsswitch.conf "/etc/nsswitch.conf.$(date)"
+
+echo "passwd:         compat winbind
+group:          compat winbind
+shadow:         compat winbind
+gshadow:        files
+hosts:          files dns
+networks:       files
+protocols:      db files
+services:       db files
+ethers:         db files
+rpc:            db files
+netgroup:       nis" > /etc/nsswitch.conf
+echo "syncADtime 6" > /etc/funname.conf
+syncADtime
+}
+
+#6
+syncADtime () {
+/etc/init.d/ntp stop
+ntpdate # "set your ntp server to sync time such as your AD Server"
+if [  $echo$? = 0 ];
+	then
+	echo "mycron 7" > /etc/funname.conf
+	mycron
+	else
+		echo "failure in set ntpdate server "
+	fi
+}
+
+#7
+#This func to add cron for sync time each 12 hour 
+mycron() {	
+crontab -l > /tmp/mycron
+echo "0 */12 * * * sudo /etc/init.d/ntp stop" >> mycron
+echo "0 */12 * * * ntpdate  " >> mycron   #"set your ntp server to sync time such as your AD Server"
+crontab /tmp/mycron
+rm -rf /tmp/mycron
+echo "joincli 8" > /etc/funname.conf
+joincli
+}
+
+#8
+joincli () {
+
+net ads join $fulldomainname -U $DomUser%$DomPass > /dev/null
+if [ $echo$? = 0 ];
+then
+echo "Joined $(hostname) to your domain"
+echo "vsupam 9" > /etc/funname.conf
+vsupam
+else
+echo "Faild to joined $(hostname)"
+fi
+ 
+}
+
+#9
+vsupam () {
+echo "session optional        pam_mkhomedir.so skel=/etc/skel umask=077" >> /etc/pam.d/common-session
+echo "%ti-admin ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+echo "%ssh-suporte ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+/etc/init.d/winbind restart
+wbinfo -t
+echo noth > /etc/funname.conf
+}
+
+#10
+noth () {
+	echo "nothing to do"
+}
+
+
+if [ -f /etc/funname.conf ]
+then
+        funname=($(cat /etc/funname.conf | awk '{print $1}'))
+
+else
+	echo pkgs > /etc/funname.conf
+	funname=pkgs
+fi
+
+
+$funname

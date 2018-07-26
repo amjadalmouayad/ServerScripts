@@ -10,7 +10,7 @@ cecho () {
 red=1; green=2; 
 
 
-ntpdate 78.110.96.12
+ntpdate NTP_SERVER
 hwclock -w
 #Disable SELINUX
 sed -i.bak 's/^\(SELINUX=\).*/\1Disable/' /etc/selinux/config

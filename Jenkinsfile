@@ -5,7 +5,7 @@ pipeline {
       parallel {
         stage('first_step') {
           steps {
-            build(job: 'job1', propagate: true, quietPeriod: 2, wait: true)
+            build(job: 'install_Nagios.sh', propagate: true, quietPeriod: 30, wait: true)
           }
         }
         stage('first_step_v2') {

@@ -12,9 +12,9 @@ cp -Rfa /etc/resolv.conf /etc/resolv.conf.bkp
 echo > /etc/resolv.conf
 
 echo "
-search nexcore.com.br
-nameserver 10.0.0.132
-nameserver 10.0.0.133
+search domain.com.br
+nameserver 10.0.0.1
+nameserver 10.0.0.2
 " > /etc/resolv.conf
 
 cp -Rfa /etc/krb5.conf /etc/krb5.conf.bkp
@@ -29,7 +29,7 @@ echo "
      admin_server = FILE:/var/log/kadmind.log
 
 [libdefaults]
-     default_realm = NEXCORE.LOCAL
+     default_realm = domain.LOCAL
      dns_lookup_realm = FALSE
      dns_lookup_kdc = FALSE
      ticket_lifetime = 24h
@@ -37,13 +37,13 @@ echo "
 
 [realms]
 NEXCORE.LOCAL = {
-        kdc = 10.0.0.135
-        admin_server = 10.0.0.135:749
-        default_server = 10.0.0.135
+        kdc = $dc_ip
+        admin_server = $dc_ip:749
+        default_server = $dc_ip
 }
 [domain_realm]
-        .nexcore.local = NEXCORE.LOCAL
-        nexcore.local  = NEXCORE.LOCAL
+        .nexcore.local = DOMAIN.LOCAL
+        nexcore.local  = DOMAIN.LOCAL
 
 [appdefaults]
      pam = {
@@ -58,8 +58,8 @@ apt-get install samba samba-common smbclient winbind krb5-config libpam-krb5 lib
 
 echo "
 [global]
-      workgroup = NEXCORE
-      realm = nexcore.local
+      workgroup = DOMAIN
+      realm = domain.local
       netbios name = $(hostname)
       server string = $(hostname)
       security = ADS
